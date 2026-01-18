@@ -1,8 +1,8 @@
-/home/user/riboseq.nf/reference/rfam-5.8s-database-id98.fasta
-/home/user/riboseq.nf/reference/rfam-5s-database-id98.fasta
-/home/user/riboseq.nf/reference/silva-arc-16s-id95.fasta
-/home/user/riboseq.nf/reference/silva-arc-23s-id98.fasta
-/home/user/riboseq.nf/reference/silva-bac-16s-id90.fasta
-/home/user/riboseq.nf/reference/silva-bac-23s-id98.fasta
-/home/user/riboseq.nf/reference/silva-euk-18s-id95.fasta
-/home/user/riboseq.nf/reference/silva-euk-28s-id98.fasta
+/data1/users/siyangming/nextflow_nf_core/riboseq.nf/reference/rfam-5.8s-database-id98.fasta
+/data1/users/siyangming/nextflow_nf_core/riboseq.nf/reference/rfam-5s-database-id98.fasta
+/data1/users/siyangming/nextflow_nf_core/riboseq.nf/reference/silva-arc-16s-id95.fasta
+/data1/users/siyangming/nextflow_nf_core/riboseq.nf/reference/silva-arc-23s-id98.fasta
+/data1/users/siyangming/nextflow_nf_core/riboseq.nf/reference/silva-bac-16s-id90.fasta
+/data1/users/siyangming/nextflow_nf_core/riboseq.nf/reference/silva-bac-23s-id98.fasta
+/data1/users/siyangming/nextflow_nf_core/riboseq.nf/reference/silva-euk-18s-id95.fasta
+/data1/users/siyangming/nextflow_nf_core/riboseq.nf/reference/silva-euk-28s-id98.fasta

@@ -63,9 +63,9 @@ def getSalmonInferredStrandedness(json_file, stranded_threshold = 0.8, unstrande
     // https://groups.google.com/g/sailfish-users/c/yxzBDv6NB6I
     def unstrandedKeys = ['IU', 'U', 'MU']
 
-    def forwardFragments = forwardKeys.collect { libCounts[it] ?: 0 }.sum()
-    def reverseFragments = reverseKeys.collect { libCounts[it] ?: 0 }.sum()
-    def unstrandedFragments = unstrandedKeys.collect { libCounts[it] ?: 0 }.sum()
+    def forwardFragments = forwardKeys.collect { key -> libCounts[key] ?: 0 }.sum()
+    def reverseFragments = reverseKeys.collect { key -> libCounts[key] ?: 0 }.sum()
+    def unstrandedFragments = unstrandedKeys.collect { key -> libCounts[key] ?: 0 }.sum()
 
     // Use shared calculation function to determine strandedness
     return calculateStrandedness(forwardFragments, reverseFragments, unstrandedFragments, stranded_threshold, unstranded_threshold)
@@ -112,11 +112,11 @@ workflow FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS {
 
     main:
 
-    ch_versions = Channel.empty()
-    ch_filtered_reads = Channel.empty()
-    ch_trim_read_count = Channel.empty()
-    ch_multiqc_files = Channel.empty()
-    ch_lint_log = Channel.empty()
+    ch_versions = channel.empty()
+    ch_filtered_reads = channel.empty()
+    ch_trim_read_count = channel.empty()
+    ch_multiqc_files = channel.empty()
+    ch_lint_log = channel.empty()
 
     ch_reads
         .branch { meta, fastqs ->
@@ -146,7 +146,7 @@ workflow FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS {
         )
         ch_versions = ch_versions.mix(FQ_LINT.out.versions.first())
         ch_lint_log = ch_lint_log.mix(FQ_LINT.out.lint)
-        ch_filtered_reads = ch_filtered_reads.join(FQ_LINT.out.lint.map { it[0] })
+        ch_filtered_reads = ch_filtered_reads.join(FQ_LINT.out.lint.map { lint_entry -> lint_entry[0] })
     }
 
     //
@@ -219,7 +219,7 @@ workflow FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS {
         .set { ch_fail_trimming_multiqc }
 
     ch_multiqc_files = ch_multiqc_files.mix(
-        ch_fail_trimming_multiqc.collectFile(name: 'fail_trimmed_samples_mqc.tsv').map { [[:], it] }
+        ch_fail_trimming_multiqc.collectFile(name: 'fail_trimmed_samples_mqc.tsv').map { tsv_file -> [[:], tsv_file] }
     )
 
     if ((!skip_linting) && (!skip_trimming)) {
@@ -227,7 +227,7 @@ workflow FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS {
             ch_filtered_reads
         )
         ch_lint_log = ch_lint_log.mix(FQ_LINT_AFTER_TRIMMING.out.lint)
-        ch_filtered_reads = ch_filtered_reads.join(FQ_LINT_AFTER_TRIMMING.out.lint.map { it[0] })
+        ch_filtered_reads = ch_filtered_reads.join(FQ_LINT_AFTER_TRIMMING.out.lint.map { lint_entry -> lint_entry[0] })
     }
 
     //
@@ -251,7 +251,7 @@ workflow FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS {
                 ch_filtered_reads
             )
             ch_lint_log = ch_lint_log.mix(FQ_LINT_AFTER_BBSPLIT.out.lint)
-            ch_filtered_reads = ch_filtered_reads.join(FQ_LINT_AFTER_BBSPLIT.out.lint.map { it[0] })
+            ch_filtered_reads = ch_filtered_reads.join(FQ_LINT_AFTER_BBSPLIT.out.lint.map { lint_entry -> lint_entry[0] })
         }
     }
 
@@ -261,7 +261,7 @@ workflow FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS {
     if (remove_ribo_rna) {
         ch_sortmerna_fastas = ch_rrna_fastas
             .collect()
-            .map { ['rrna_refs', it] }
+            .map { fasta_file -> ['rrna_refs', fasta_file] }
 
         if (make_sortmerna_index) {
             SORTMERNA_INDEX(
@@ -269,7 +269,7 @@ workflow FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS {
                 ch_sortmerna_fastas,
                 [[], []],
             )
-            ch_sortmerna_index = SORTMERNA_INDEX.out.index.first()
+            ch_sortmerna_index = SORTMERNA_INDEX.out.index
         }
 
         SORTMERNA(
@@ -289,7 +289,7 @@ workflow FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS {
                 ch_filtered_reads
             )
             ch_lint_log = ch_lint_log.mix(FQ_LINT_AFTER_SORTMERNA.out.lint)
-            ch_filtered_reads = ch_filtered_reads.join(FQ_LINT_AFTER_SORTMERNA.out.lint.map { it[0] })
+            ch_filtered_reads = ch_filtered_reads.join(FQ_LINT_AFTER_SORTMERNA.out.lint.map { lint_entry -> lint_entry[0] })
         }
     }
 
@@ -310,7 +310,7 @@ workflow FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS {
 
     ch_fasta
         .combine(ch_strand_fastq.auto_strand)
-        .map { it.first() }
+        .map { combo -> combo.first() }
         .first()
         .set { ch_genome_fasta }
 
@@ -341,6 +341,6 @@ workflow FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS {
     lint_log        = ch_lint_log
     reads           = ch_strand_inferred_fastq
     trim_read_count = ch_trim_read_count
-    multiqc_files   = ch_multiqc_files.transpose().map { it[1] }
+    multiqc_files   = ch_multiqc_files.transpose().map { row -> row[1] }
     versions        = ch_versions // channel: [ versions.yml ]
 }

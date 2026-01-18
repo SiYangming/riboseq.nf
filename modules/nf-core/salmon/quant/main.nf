@@ -29,8 +29,9 @@ process SALMON_QUANT {
     prefix   = task.ext.prefix ?: "${meta.id}"
 
     def reference   = "--index $index"
-    def reads1 = [], reads2 = []
-    meta.single_end ? [reads].flatten().each{reads1 << it} : reads.eachWithIndex{ v, ix -> ( ix & 1 ? reads2 : reads1) << v }
+    def reads1 = []
+    def reads2 = []
+    meta.single_end ? [reads].flatten().each { read -> reads1 << read } : reads.eachWithIndex{ v, ix -> ( ix & 1 ? reads2 : reads1) << v }
     def input_reads = meta.single_end ? "-r ${reads1.join(" ")}" : "-1 ${reads1.join(" ")} -2 ${reads2.join(" ")}"
     if (alignment_mode) {
         reference   = "-t $transcript_fasta"

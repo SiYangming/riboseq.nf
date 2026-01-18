@@ -16,8 +16,8 @@ workflow FASTQ_ALIGN_STAR {
     ch_transcripts_fasta        // channel: [ val(meta), path(fasta) ]
 
     main:
-
-    ch_versions = Channel.empty()
+    
+    ch_versions = channel.empty()
 
     //
     // Map reads with STAR

@@ -17,8 +17,8 @@ workflow FASTQ_SUBSAMPLE_FQ_SALMON {
     make_index          // boolean: Whether to create salmon index before running salmon quant
 
     main:
-
-    ch_versions = Channel.empty()
+    
+    ch_versions = channel.empty()
 
     //
     // Create Salmon index if required

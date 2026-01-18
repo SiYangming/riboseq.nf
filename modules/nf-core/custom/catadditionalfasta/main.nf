@@ -23,7 +23,7 @@ process CUSTOM_CATADDITIONALFASTA {
     template 'fasta2gtf.py'
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def _prefix = task.ext.prefix ?: "${meta.id}"
     """
     mkdir out
     touch out/genome_transcriptome.fasta

@@ -36,9 +36,9 @@ workflow FASTQ_FASTQC_UMITOOLS_TRIMGALORE {
     min_trimmed_reads // integer: > 0
 
     main:
-    ch_versions = Channel.empty()
-    fastqc_html = Channel.empty()
-    fastqc_zip = Channel.empty()
+    ch_versions = channel.empty()
+    fastqc_html = channel.empty()
+    fastqc_zip = channel.empty()
     if (!skip_fastqc) {
         FASTQC(reads)
         fastqc_html = FASTQC.out.html
@@ -47,7 +47,7 @@ workflow FASTQ_FASTQC_UMITOOLS_TRIMGALORE {
     }
 
     umi_reads = reads
-    umi_log = Channel.empty()
+    umi_log = channel.empty()
     if (with_umi && !skip_umi_extract) {
         UMITOOLS_EXTRACT(reads)
         umi_reads = UMITOOLS_EXTRACT.out.reads
@@ -57,19 +57,19 @@ workflow FASTQ_FASTQC_UMITOOLS_TRIMGALORE {
         // Discard R1 / R2 if required
         if (umi_discard_read in [1, 2]) {
             UMITOOLS_EXTRACT.out.reads
-                .map { meta, reads ->
-                    meta.single_end ? [meta, reads] : [meta + ['single_end': true], reads[umi_discard_read % 2]]
+                .map { meta, extracted_reads ->
+                    meta.single_end ? [meta, extracted_reads] : [meta + ['single_end': true], extracted_reads[umi_discard_read % 2]]
                 }
                 .set { umi_reads }
         }
     }
 
     trim_reads = umi_reads
-    trim_unpaired = Channel.empty()
-    trim_html = Channel.empty()
-    trim_zip = Channel.empty()
-    trim_log = Channel.empty()
-    trim_read_count = Channel.empty()
+    trim_unpaired = channel.empty()
+    trim_html = channel.empty()
+    trim_zip = channel.empty()
+    trim_log = channel.empty()
+    trim_read_count = channel.empty()
     if (!skip_trimming) {
         TRIMGALORE(umi_reads)
         trim_unpaired = TRIMGALORE.out.unpaired
@@ -89,7 +89,7 @@ workflow FASTQ_FASTQC_UMITOOLS_TRIMGALORE {
                     [meta, reads_, num_reads]
                 }
                 else {
-                    [meta, reads, min_trimmed_reads.toFloat() + 1]
+                    [meta, reads_, min_trimmed_reads.toFloat() + 1]
                 }
             }
             .set { ch_num_trimmed_reads }

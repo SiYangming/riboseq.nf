@@ -12,8 +12,8 @@ workflow BAM_SORT_STATS_SAMTOOLS {
     ch_fasta // channel: [ val(meta), path(fasta) ]
 
     main:
-
-    ch_versions = Channel.empty()
+    
+    ch_versions = channel.empty()
 
     SAMTOOLS_SORT ( ch_bam, ch_fasta )
     ch_versions = ch_versions.mix(SAMTOOLS_SORT.out.versions.first())

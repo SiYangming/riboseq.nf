@@ -50,16 +50,16 @@ workflow PREPARE_GENOME {
     skip_alignment           //   boolean: Skip all of the alignment-based processes within the pipeline
 
     main:
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     //
     // Uncompress genome fasta file if required
     //
     if (fasta.endsWith('.gz')) {
-        ch_fasta    = GUNZIP_FASTA ( [ [:], fasta ] ).gunzip.map { it[1] }
+        ch_fasta    = GUNZIP_FASTA ( [ [:], fasta ] ).gunzip.map { row -> row[1] }
         ch_versions = ch_versions.mix(GUNZIP_FASTA.out.versions)
     } else {
-        ch_fasta = Channel.value(file(fasta))
+        ch_fasta = channel.value(file(fasta))
     }
 
     //
@@ -68,17 +68,17 @@ workflow PREPARE_GENOME {
     if (gtf || gff) {
         if (gtf) {
             if (gtf.endsWith('.gz')) {
-                ch_gtf      = GUNZIP_GTF ( [ [:], gtf ] ).gunzip.map { it[1] }
+                ch_gtf      = GUNZIP_GTF ( [ [:], gtf ] ).gunzip.map { row -> row[1] }
                 ch_versions = ch_versions.mix(GUNZIP_GTF.out.versions)
             } else {
-                ch_gtf = Channel.value(file(gtf))
+                ch_gtf = channel.value(file(gtf))
             }
         } else if (gff) {
             if (gff.endsWith('.gz')) {
-                ch_gff      = GUNZIP_GFF ( [ [:], gff ] ).gunzip.map { it[1] }
+                ch_gff      = GUNZIP_GFF ( [ [:], gff ] ).gunzip.map { row -> row[1] }
                 ch_versions = ch_versions.mix(GUNZIP_GFF.out.versions)
             } else {
-                ch_gff = Channel.value(file(gff))
+                ch_gff = channel.value(file(gff))
             }
             ch_gtf      = GFFREAD ( ch_gff ).gtf
             ch_versions = ch_versions.mix(GFFREAD.out.versions)
@@ -111,19 +111,19 @@ workflow PREPARE_GENOME {
     def biotype = gencode ? "gene_type" : "gene_biotype"
     if (additional_fasta) {
         if (additional_fasta.endsWith('.gz')) {
-            ch_add_fasta = GUNZIP_ADDITIONAL_FASTA ( [ [:], additional_fasta ] ).gunzip.map { it[1] }
+            ch_add_fasta = GUNZIP_ADDITIONAL_FASTA ( [ [:], additional_fasta ] ).gunzip.map { row -> row[1] }
             ch_versions  = ch_versions.mix(GUNZIP_ADDITIONAL_FASTA.out.versions)
         } else {
-            ch_add_fasta = Channel.value(file(additional_fasta))
+            ch_add_fasta = channel.value(file(additional_fasta))
         }
 
         CUSTOM_CATADDITIONALFASTA(
-            ch_fasta.combine(ch_gtf).map{fasta, gtf -> [[:], fasta, gtf]},
-            ch_add_fasta.map{[[:], it]},
+            ch_fasta.combine(ch_gtf).map { ref_fasta, ref_gtf -> [[:], ref_fasta, ref_gtf] },
+            ch_add_fasta.map { add_fasta_file -> [[:], add_fasta_file] },
             biotype
         )
-        ch_fasta    = CUSTOM_CATADDITIONALFASTA.out.fasta.map{it[1]}.first()
-        ch_gtf      = CUSTOM_CATADDITIONALFASTA.out.gtf.map{it[1]}.first()
+        ch_fasta    = CUSTOM_CATADDITIONALFASTA.out.fasta.map { fasta_row -> fasta_row[1] }
+        ch_gtf      = CUSTOM_CATADDITIONALFASTA.out.gtf.map { gtf_row -> gtf_row[1] }
         ch_versions = ch_versions.mix(CUSTOM_CATADDITIONALFASTA.out.versions)
     }
 
@@ -132,10 +132,10 @@ workflow PREPARE_GENOME {
     //
     if (transcript_fasta) {
         if (transcript_fasta.endsWith('.gz')) {
-            ch_transcript_fasta = GUNZIP_TRANSCRIPT_FASTA ( [ [:], transcript_fasta ] ).gunzip.map { it[1] }
+            ch_transcript_fasta = GUNZIP_TRANSCRIPT_FASTA ( [ [:], transcript_fasta ] ).gunzip.map { row -> row[1] }
             ch_versions         = ch_versions.mix(GUNZIP_TRANSCRIPT_FASTA.out.versions)
         } else {
-            ch_transcript_fasta = Channel.value(file(transcript_fasta))
+            ch_transcript_fasta = channel.value(file(transcript_fasta))
         }
         if (gencode) {
             PREPROCESS_TRANSCRIPTS_FASTA_GENCODE ( ch_transcript_fasta )
@@ -150,9 +150,9 @@ workflow PREPARE_GENOME {
     //
     // Create chromosome sizes file
     //
-    CUSTOM_GETCHROMSIZES ( ch_fasta.map { [ [:], it ] } )
-    ch_fai         = CUSTOM_GETCHROMSIZES.out.fai.map { it[1] }
-    ch_chrom_sizes = CUSTOM_GETCHROMSIZES.out.sizes.map { it[1] }
+    CUSTOM_GETCHROMSIZES ( ch_fasta.map { fasta_file -> [ [:], fasta_file ] } )
+    ch_fai         = CUSTOM_GETCHROMSIZES.out.fai.map { row -> row[1] }
+    ch_chrom_sizes = CUSTOM_GETCHROMSIZES.out.sizes.map { row -> row[1] }
     ch_versions    = ch_versions.mix(CUSTOM_GETCHROMSIZES.out.versions)
 
     //
@@ -166,23 +166,23 @@ workflow PREPARE_GENOME {
     //
     // Uncompress BBSplit index or generate from scratch if required
     //
-    ch_bbsplit_index = Channel.empty()
+    ch_bbsplit_index = channel.empty()
     if ('bbsplit' in prepare_tool_indices) {
         if (bbsplit_index) {
             if (bbsplit_index.endsWith('.tar.gz')) {
-                ch_bbsplit_index = UNTAR_BBSPLIT_INDEX ( [ [:], bbsplit_index ] ).untar.map { it[1] }
+                ch_bbsplit_index = UNTAR_BBSPLIT_INDEX ( [ [:], bbsplit_index ] ).untar.map { untar_row -> untar_row[1] }
                 ch_versions      = ch_versions.mix(UNTAR_BBSPLIT_INDEX.out.versions)
             } else {
-                ch_bbsplit_index = Channel.value(file(bbsplit_index))
+                ch_bbsplit_index = channel.value(file(bbsplit_index))
             }
         } else {
-            Channel
+            channel
                 .from(file(bbsplit_fasta_list))
                 .splitCsv() // Read in 2 column csv file: short_name,path_to_fasta
-                .flatMap { id, fasta -> [ [ 'id', id ], [ 'fasta', file(fasta, checkIfExists: true) ] ] } // Flatten entries to be able to groupTuple by a common key
+                .flatMap { id, fasta_path -> [ [ 'id', id ], [ 'fasta', file(fasta_path, checkIfExists: true) ] ] } // Flatten entries to be able to groupTuple by a common key
                 .groupTuple()
-                .map { it -> it[1] } // Get rid of keys and keep grouped values
-                .collect { [ it ] } // Collect entries as a list to pass as "tuple val(short_names), path(path_to_fasta)" to module
+                .map { grouped_values -> grouped_values[1] } // Get rid of keys and keep grouped values
+                .collect { fasta_group -> [ fasta_group ] } // Collect entries as a list to pass as "tuple val(short_names), path(path_to_fasta)" to module
                 .set { ch_bbsplit_fasta_list }
 
             ch_bbsplit_index = BBMAP_BBSPLIT ( [ [:], [] ], [], ch_fasta, ch_bbsplit_fasta_list, true ).index
@@ -196,29 +196,29 @@ workflow PREPARE_GENOME {
     //
     // Uncompress sortmerna index or generate from scratch if required
     //
-    ch_sortmerna_index = Channel.empty()
-    ch_rrna_fastas = Channel.empty()
+    ch_sortmerna_index = channel.empty()
+    ch_rrna_fastas = channel.empty()
 
     if ('sortmerna' in prepare_tool_indices) {
         ribo_db = file(sortmerna_fasta_list)
 
         if (sortmerna_index) {
             if (sortmerna_index.endsWith('.tar.gz')) {
-                ch_sortmerna_index = UNTAR_SORTMERNA_INDEX ( [ [:], sortmerna_index ] ).untar.map { it[1] }
+                ch_sortmerna_index = UNTAR_SORTMERNA_INDEX ( [ [:], sortmerna_index ] ).untar.map { untar_row -> untar_row[1] }
                 ch_versions = ch_versions.mix(UNTAR_SORTMERNA_INDEX.out.versions)
             } else {
-                ch_sortmerna_index = Channel.value(file(sortmerna_index))
+                ch_sortmerna_index = channel.value(file(sortmerna_index))
             }
         } else {
-            ch_rrna_fastas = Channel.from(ribo_db.readLines())
+            ch_rrna_fastas = channel.from(ribo_db.readLines())
                 .map { row -> file(row, checkIfExists: true) }
 
             SORTMERNA_INDEX (
-                Channel.of([ [],[] ]),
+                channel.of([ [],[] ]),
                 ch_rrna_fastas.collect().map { [ 'rrna_refs', it ] },
-                Channel.of([ [],[] ])
+                channel.of([ [],[] ])
             )
-            ch_sortmerna_index = SORTMERNA_INDEX.out.index.first()
+            ch_sortmerna_index = SORTMERNA_INDEX.out.index
             ch_versions = ch_versions.mix(SORTMERNA_INDEX.out.versions)
         }
     }
@@ -226,14 +226,14 @@ workflow PREPARE_GENOME {
     //
     // Uncompress STAR index or generate from scratch if required
     //
-    ch_star_index = Channel.empty()
+    ch_star_index = channel.empty()
     if ('star' in prepare_tool_indices) {
         if (star_index) {
             if (star_index.endsWith('.tar.gz')) {
-                ch_star_index = UNTAR_STAR_INDEX ( [ [:], star_index ] ).untar.map { it[1] }
+                ch_star_index = UNTAR_STAR_INDEX ( [ [:], star_index ] ).untar.map { untar_row -> untar_row[1] }
                 ch_versions   = ch_versions.mix(UNTAR_STAR_INDEX.out.versions)
             } else {
-                ch_star_index = Channel.value(file(star_index))
+                ch_star_index = channel.value(file(star_index))
             }
         } else {
             // Check if an AWS iGenome has been provided to use the appropriate version of STAR
@@ -247,7 +247,10 @@ workflow PREPARE_GENOME {
                 ch_star_index = STAR_GENOMEGENERATE_IGENOMES ( ch_fasta, ch_gtf ).index
                 ch_versions   = ch_versions.mix(STAR_GENOMEGENERATE_IGENOMES.out.versions)
             } else {
-                ch_star_index = STAR_GENOMEGENERATE ( ch_fasta.map { [ [:], it ] }, ch_gtf.map { [ [:], it ] } ).index.map { it[1] }
+                ch_star_index = STAR_GENOMEGENERATE (
+                    ch_fasta.map { fasta_file -> [ [:], fasta_file ] },
+                    ch_gtf.map { gtf_file -> [ [:], gtf_file ] }
+                ).index.map { index_row -> index_row[1] }
                 ch_versions   = ch_versions.mix(STAR_GENOMEGENERATE.out.versions)
             }
         }
@@ -256,13 +259,13 @@ workflow PREPARE_GENOME {
     //
     // Uncompress Salmon index or generate from scratch if required
     //
-    ch_salmon_index = Channel.empty()
+    ch_salmon_index = channel.empty()
     if (salmon_index) {
         if (salmon_index.endsWith('.tar.gz')) {
-            ch_salmon_index = UNTAR_SALMON_INDEX ( [ [:], salmon_index ] ).untar.map { it[1] }
+            ch_salmon_index = UNTAR_SALMON_INDEX ( [ [:], salmon_index ] ).untar.map { untar_row -> untar_row[1] }
             ch_versions     = ch_versions.mix(UNTAR_SALMON_INDEX.out.versions)
         } else {
-            ch_salmon_index = Channel.value(file(salmon_index))
+            ch_salmon_index = channel.value(file(salmon_index))
         }
     } else {
         if ('salmon' in prepare_tool_indices) {

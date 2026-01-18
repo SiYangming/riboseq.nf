@@ -18,9 +18,9 @@ process CAT_FASTQ {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
+    def _args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def readList = reads instanceof List ? reads.collect{ it.toString() } : [reads.toString()]
+    def readList = reads instanceof List ? reads.collect { read -> read.toString() } : [reads.toString()]
     if (meta.single_end) {
         if (readList.size >= 1) {
             """
@@ -51,7 +51,7 @@ process CAT_FASTQ {
 
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def readList = reads instanceof List ? reads.collect{ it.toString() } : [reads.toString()]
+    def readList = reads instanceof List ? reads.collect { read -> read.toString() } : [reads.toString()]
     if (meta.single_end) {
         if (readList.size >= 1) {
             """

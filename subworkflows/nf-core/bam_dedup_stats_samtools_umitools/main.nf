@@ -12,8 +12,8 @@ workflow BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS {
     val_get_dedup_stats // boolean: true/false
 
     main:
-
-    ch_versions = Channel.empty()
+    
+    ch_versions = channel.empty()
 
     //
     // UMI-tools dedup

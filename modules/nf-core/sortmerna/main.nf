@@ -26,7 +26,7 @@ process SORTMERNA {
     def prefix        = task.ext.prefix ?: "${meta.id}"
 
     def index_only    = args.contains('--index 1')? true : false
-    def skip_index    = args.contains('--index 0')? true : false
+    def _skip_index   = args.contains('--index 0')? true : false
     def paired_end    = reads instanceof List
     def paired_cmd    = ''
     def reads_args    = ''
@@ -37,7 +37,7 @@ process SORTMERNA {
 
     if (! index_only){
         reads_args = '--aligned rRNA_reads --fastx --other non_rRNA_reads'
-        reads_input = paired_end ? reads.collect{"--reads $it"}.join(' ') : "--reads $reads"
+        reads_input = paired_end ? reads.collect { read -> "--reads $read" }.join(' ') : "--reads $reads"
         def n_fastq = paired_end ? reads.size() : 1
         if ( n_fastq == 1 ) {
             mv_cmd = """
@@ -80,13 +80,13 @@ process SORTMERNA {
 
     def index_only    = args.contains('--index 1')? true : false
     def paired_end    = reads instanceof List
-    def paired_cmd    = ''
-    def out2_cmd      = ''
+    def _paired_cmd   = ''
+    def _out2_cmd     = ''
     def mv_cmd        = ''
     def reads_input   = ''
 
     if (! index_only){
-        reads_input = paired_end ? reads.collect{"--reads $it"}.join(' ') : "--reads $reads"
+        reads_input = paired_end ? reads.collect { read -> "--reads $read" }.join(' ') : "--reads $reads"
         def n_fastq = paired_end ? reads.size() : 1
         if ( n_fastq == 1 ) {
             mv_cmd = "echo | gzip > ${prefix}.non_rRNA.fastq.gz"

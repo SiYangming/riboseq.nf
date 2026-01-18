@@ -28,7 +28,7 @@ workflow QUANTIFY_PSEUDO_ALIGNMENT {
     kallisto_quant_fraglen_sd //     val: Estimated standard error for fragment length required by Kallisto in single-end mode
 
     main:
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     //
     // Quantify and merge counts across samples
@@ -61,8 +61,10 @@ workflow QUANTIFY_PSEUDO_ALIGNMENT {
     }
 
     CUSTOM_TX2GENE (
-        gtf.map { [ [:], it ] },
-        ch_pseudo_results.collect{ it[1] }.map { [ [:], it ] },
+        gtf.map { gtf_file -> [ [:], gtf_file ] },
+        ch_pseudo_results
+            .collect { result_tuple -> result_tuple[1] }
+            .map { result_path -> [ [:], result_path ] },
         pseudo_aligner,
         gtf_id_attribute,
         gtf_extra_attribute
@@ -70,7 +72,9 @@ workflow QUANTIFY_PSEUDO_ALIGNMENT {
     ch_versions = ch_versions.mix(CUSTOM_TX2GENE.out.versions)
 
     TXIMETA_TXIMPORT (
-        ch_pseudo_results.collect{ it[1] }.map { [ ['id': 'all_samples'], it ] },
+        ch_pseudo_results
+            .collect { result_tuple -> result_tuple[1] }
+            .map { result_path -> [ ['id': 'all_samples'], result_path ] },
         CUSTOM_TX2GENE.out.tx2gene,
         pseudo_aligner
     )
