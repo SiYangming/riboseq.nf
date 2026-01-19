@@ -215,7 +215,7 @@ workflow PREPARE_GENOME {
 
             SORTMERNA_INDEX (
                 channel.of([ [],[] ]),
-                ch_rrna_fastas.collect().map { [ 'rrna_refs', it ] },
+                ch_rrna_fastas.collect().map { fasta_file -> [ 'rrna_refs', fasta_file ] },
                 channel.of([ [],[] ])
             )
             ch_sortmerna_index = SORTMERNA_INDEX.out.index

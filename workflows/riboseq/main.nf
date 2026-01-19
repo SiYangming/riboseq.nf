@@ -62,8 +62,8 @@ workflow RIBOSEQ {
     ch_versions         // channel: [ path(versions.yml) ]
     ch_fasta            // channel: path(genome.fasta)
     ch_gtf              // channel: path(genome.gtf)
-    ch_fai              // channel: path(genome.fai)
-    ch_chrom_sizes      // channel: path(genome.sizes)
+    _ch_fai             // channel: path(genome.fai)
+    _ch_chrom_sizes     // channel: path(genome.sizes)
     ch_transcript_fasta // channel: path(transcript.fasta)
     ch_star_index       // channel: path(star/index/)
     ch_salmon_index     // channel: path(salmon/index/)
@@ -166,13 +166,13 @@ workflow RIBOSEQ {
 
     FASTQ_ALIGN_STAR(
         FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS.out.reads,
-        ch_star_index.map { [ [:], it ] },
-        ch_gtf.map { [ [:], it ] },
+        ch_star_index.map { index_path -> [ [:], index_path ] },
+        ch_gtf.map { gtf_file -> [ [:], gtf_file ] },
         params.star_ignore_sjdbgtf,
         '',
         params.seq_center ?: '',
-        ch_fasta.map { [ [:], it ] },
-        ch_transcript_fasta.map { [ [:], it ] }
+        ch_fasta.map { fasta_file -> [ [:], fasta_file ] },
+        ch_transcript_fasta.map { transcript_fasta -> [ [:], transcript_fasta ] }
     )
 
     ch_genome_bam              = FASTQ_ALIGN_STAR.out.bam
@@ -181,10 +181,10 @@ workflow RIBOSEQ {
     ch_versions                = ch_versions.mix(FASTQ_ALIGN_STAR.out.versions)
 
     ch_multiqc_files = ch_multiqc_files
-        .mix(FASTQ_ALIGN_STAR.out.stats.collect{it[1]})
-        .mix(FASTQ_ALIGN_STAR.out.flagstat.collect{it[1]})
-        .mix(FASTQ_ALIGN_STAR.out.idxstats.collect{it[1]})
-        .mix(FASTQ_ALIGN_STAR.out.log_final.collect{it[1]})
+        .mix(FASTQ_ALIGN_STAR.out.stats.collect { stats_tuple -> stats_tuple[1] })
+        .mix(FASTQ_ALIGN_STAR.out.flagstat.collect { flagstat_tuple -> flagstat_tuple[1] })
+        .mix(FASTQ_ALIGN_STAR.out.idxstats.collect { idxstats_tuple -> idxstats_tuple[1] })
+        .mix(FASTQ_ALIGN_STAR.out.log_final.collect { log_final_tuple -> log_final_tuple[1] })
 
     //
     // SUBWORKFLOW: Remove duplicate reads from BAM file based on UMIs
@@ -194,12 +194,12 @@ workflow RIBOSEQ {
 
         BAM_DEDUP_UMI(
             ch_genome_bam.join(ch_genome_bam_index, by: [0]),
-            ch_fasta.map { [ [:], it ] },
+            ch_fasta.map { fasta_file -> [ [:], fasta_file ] },
             params.umi_dedup_tool,
             params.umitools_dedup_stats,
             params.bam_csi_index,
             ch_transcriptome_bam,
-            ch_transcript_fasta.map { [ [:], it ] }
+            ch_transcript_fasta.map { transcript_fasta -> [ [:], transcript_fasta ] }
         )
 
         ch_genome_bam        = BAM_DEDUP_UMI.out.bam
@@ -234,7 +234,7 @@ workflow RIBOSEQ {
     if (!params.skip_ribotish){
         RIBOTISH_QUALITY_RIBOSEQ(
             ch_bams_for_analysis,
-            ch_gtf.map { [ [:], it ] }.first()
+            ch_gtf.map { gtf_file -> [ [:], gtf_file ] }.first()
         )
         ch_versions      = ch_versions.mix(RIBOTISH_QUALITY_RIBOSEQ.out.versions)
 
@@ -256,11 +256,11 @@ workflow RIBOSEQ {
         ch_versions = ch_versions.mix(RIBOTISH_PREDICT_INDIVIDUAL.out.versions)
 
         RIBOTISH_PREDICT_ALL(
-            ribotish_predict_inputs.bam.map{meta, bam, bai -> [[id:'allsamples'], bam, bai]}.groupTuple(),
+            ribotish_predict_inputs.bam.map{ _meta, bam, bai -> [[id:'allsamples'], bam, bai]}.groupTuple(),
             [[:],[],[]],
             ch_fasta_gtf,
             [[:],[]],
-            ribotish_predict_inputs.offset.map{meta, offset -> [[id:'allsamples'], offset]}.groupTuple(),
+            ribotish_predict_inputs.offset.map{ _meta, offset -> [[id:'allsamples'], offset]}.groupTuple(),
             [[:],[]]
         )
         ch_versions = ch_versions.mix(RIBOTISH_PREDICT_ALL.out.versions)
@@ -299,8 +299,8 @@ workflow RIBOSEQ {
     if (!params.skip_ribowaltz) {
         RIBOWALTZ(
             ch_transcriptome_bam_by_type.riboseq,
-            ch_gtf.map { [ [:], it ] },
-            ch_fasta.map { [ [:], it ] })
+            ch_gtf.map { gtf_file -> [ [:], gtf_file ] },
+            ch_fasta.map { fasta_file -> [ [:], fasta_file ] })
 
         ch_versions = ch_versions.mix(RIBOWALTZ.out.versions)
     }
@@ -310,7 +310,7 @@ workflow RIBOSEQ {
     //
 
     QUANTIFY_STAR_SALMON (
-        ch_samplesheet.map { [ [:], it ] },
+        ch_samplesheet.map { samplesheet_file -> [ [:], samplesheet_file ] },
         ch_transcriptome_bam,
         [],
         ch_transcript_fasta,
@@ -333,11 +333,11 @@ workflow RIBOSEQ {
 
         ch_contrasts = ch_contrasts_file
             .splitCsv ( header:true, sep:',' )
-            .map{[it, it.variable, it.reference, it.target]}
+            .map { row -> [row, row.variable, row.reference, row.target] }
 
         ch_samplesheet_matrix = QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled
             .combine(ch_samplesheet)
-            .map{[it[0], it[2], it[1]]}
+            .map { combined -> [combined[0], combined[2], combined[1]] }
             .first()
 
         ANOTA2SEQ_ANOTA2SEQRUN(
@@ -350,7 +350,7 @@ workflow RIBOSEQ {
     //
     // Collate and save software versions
     //
-    ch_versions = ch_versions.filter{it != null}
+    ch_versions = ch_versions.filter { version_entry -> version_entry != null }
 
     softwareVersionsToYAML(ch_versions)
         .collectFile(storeDir: "${params.outdir}/pipeline_info", name: 'nf_core_riboseq_software_mqc_versions.yml', sort: true, newLine: true)

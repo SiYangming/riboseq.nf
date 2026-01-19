@@ -30,25 +30,10 @@ process RIBOTRICER_DETECTORFS {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def strandedness_cmd = ''
-
-    switch(meta.strandedness) {
-        case "forward":
-            strandedness_cmd = "--stranded yes"
-            break
-        case "reverse":
-            strandedness_cmd = "--stranded reverse"
-            break
-        //
-        // Specifying unstranded seems broken - see
-        // https://github.com/smithlabcode/ribotricer/issues/153. Leaving it
-        // undefined works, though ribotricer may incorrectly infer
-        // strandednesss?
-        //
-        //case "unstranded":
-        //    strandedness_cmd = "--stranded no"
-        //    break
-    }
+    def strandedness_cmd = [
+        'forward': '--stranded yes',
+        'reverse': '--stranded reverse'
+    ].get(meta.strandedness, '')
     """
     ribotricer detect-orfs \\
         --bam $bam \\
@@ -64,7 +49,7 @@ process RIBOTRICER_DETECTORFS {
     """
 
     stub:
-    def args = task.ext.args ?: ''
+    def _args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     touch ${prefix}_protocol.txt
