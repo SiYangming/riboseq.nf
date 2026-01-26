@@ -1,0 +1,33 @@
+# 水稻完整 rRNA + tRNA 数据库配置
+# 用于 Ribo-seq 分析中去除 rRNA 和 tRNA 污染
+
+# ============================================
+# rRNA 数据库
+# ============================================
+
+# 真核生物核 rRNA
+# https://raw.githubusercontent.com/biocore/sortmerna/v4.3.4/data/rRNA_databases/silva-euk-18s-id95.fasta
+# https://raw.githubusercontent.com/biocore/sortmerna/v4.3.4/data/rRNA_databases/silva-euk-28s-id98.fasta
+# https://raw.githubusercontent.com/biocore/sortmerna/v4.3.4/data/rRNA_databases/rfam-5.8s-database-id98.fasta
+# https://raw.githubusercontent.com/biocore/sortmerna/v4.3.4/data/rRNA_databases/rfam-5s-database-id98.fasta
+./RNAdb/rRNA/rfam-5.8s-database-id98.fasta
+./RNAdb/rRNA/rfam-5s-database-id98.fasta
+./RNAdb/rRNA/silva-arc-16s-id95.fasta
+./RNAdb/rRNA/silva-arc-23s-id98.fasta
+./RNAdb/rRNA/silva-bac-16s-id90.fasta
+./RNAdb/rRNA/silva-bac-23s-id98.fasta
+./RNAdb/rRNA/silva-euk-18s-id95.fasta
+./RNAdb/rRNA/silva-euk-28s-id98.fasta
+
+# 水稻叶绿体 rRNA（本地文件）
+./RNAdb/riceRNAdb/rice_chloroplast_rRNA.fasta
+
+# 水稻线粒体 rRNA（本地文件）
+./RNAdb/riceRNAdb/rice_mitochondrial_rRNA.fasta
+
+# ============================================
+# tRNA 数据库
+# ============================================
+
+# 水稻所有 tRNA（细胞核 + 叶绿体 + 线粒体）
+./RNAdb/riceRNAdb/rice_all_tRNA.fasta
