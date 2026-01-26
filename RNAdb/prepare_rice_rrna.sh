@@ -6,20 +6,20 @@ set -e
 echo "正在准备水稻 rRNA 数据库..."
 
 # 创建输出目录
-mkdir -p rice_rrna_db
+mkdir -p riceRNAdb
 
 # 1. 下载水稻叶绿体基因组（NCBI RefSeq）
 echo "下载水稻叶绿体基因组..."
-wget -O rice_rrna_db/rice_chloroplast.gb \
+wget -O riceRNAdb/rice_chloroplast.gb \
   "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=NC_001320.1&rettype=gb&retmode=text"
 
 # 2. 下载水稻线粒体基因组
 echo "下载水稻线粒体基因组..."
-wget -O rice_rrna_db/rice_mitochondrion.gb \
+wget -O riceRNAdb/rice_mitochondrion.gb \
   "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=NC_011033.1&rettype=gb&retmode=text"
 
 # 3. 提取 rRNA 序列（使用 Python 或手动提取）
-cat > rice_rrna_db/extract_rrna.py <<'EOF'
+cat > riceRNAdb/extract_rrna.py <<'EOF'
 #!/usr/bin/env python3
 from Bio import SeqIO
 import sys
@@ -47,20 +47,20 @@ if __name__ == "__main__":
     extract_rrna(sys.argv[1], sys.argv[2], sys.argv[3])
 EOF
 
-chmod +x rice_rrna_db/extract_rrna.py
+chmod +x riceRNAdb/extract_rrna.py
 
 # 检查是否安装了 BioPython
 if python3 -c "import Bio" 2>/dev/null; then
     echo "提取叶绿体 rRNA..."
-    python3 rice_rrna_db/extract_rrna.py \
-        rice_rrna_db/rice_chloroplast.gb \
-        rice_rrna_db/rice_chloroplast_rRNA.fasta \
+    python3 riceRNAdb/extract_rrna.py \
+        riceRNAdb/rice_chloroplast.gb \
+        riceRNAdb/rice_chloroplast_rRNA.fasta \
         "Oryza_sativa_chloroplast"
     
     echo "提取线粒体 rRNA..."
-    python3 rice_rrna_db/extract_rrna.py \
-        rice_rrna_db/rice_mitochondrion.gb \
-        rice_rrna_db/rice_mitochondrial_rRNA.fasta \
+    python3 riceRNAdb/extract_rrna.py \
+        riceRNAdb/rice_mitochondrion.gb \
+        riceRNAdb/rice_mitochondrial_rRNA.fasta \
         "Oryza_sativa_mitochondrion"
 else
     echo "警告: 未安装 BioPython，请手动提取 rRNA 序列"
@@ -78,17 +78,17 @@ https://raw.githubusercontent.com/biocore/sortmerna/v4.3.4/data/rRNA_databases/r
 https://raw.githubusercontent.com/biocore/sortmerna/v4.3.4/data/rRNA_databases/rfam-5s-database-id98.fasta
 
 # 水稻叶绿体 rRNA（本地文件）
-$(pwd)/rice_rrna_db/rice_chloroplast_rRNA.fasta
+$(pwd)/riceRNAdb/rice_chloroplast_rRNA.fasta
 
 # 水稻线粒体 rRNA（本地文件）
-$(pwd)/rice_rrna_db/rice_mitochondrial_rRNA.fasta
+$(pwd)/riceRNAdb/rice_mitochondrial_rRNA.fasta
 EOF
 
 echo ""
 echo "✅ 准备完成！"
 echo ""
 echo "生成的文件："
-ls -lh rice_rrna_db/
+ls -lh riceRNAdb/
 echo ""
 echo "rRNA 数据库配置文件: rice_rrna_database_complete.txt"
 echo ""
