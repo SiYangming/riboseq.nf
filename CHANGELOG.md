@@ -3,6 +3,28 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.1.0 - 2026-01-29
+
+### `Added`
+
+- Integrated **Kallisto** as an alternative pseudo-aligner for quantification ([@siyangming](https://github.com/siyangming))
+  - Added `KALLISTO_INDEX` and `KALLISTO_QUANT` modules.
+  - Added parameters: `--kallisto_index`, `--kallisto_quant_fraglen`, `--kallisto_quant_fraglen_sd`, `--extra_kallisto_quant_args`.
+  - Updated quantification logic to support `--pseudo_aligner kallisto`.
+  - Dynamic output directory naming based on selected aligner.
+
+## v2.0.0 - 2026-01-26
+
+### `Added`
+
+- Added RiboCode module for ORF calling ([@siyangming](https://github.com/siyangming))
+  - `RIBOCODE_GTFUPDATE`: Prepare GTF annotation
+  - `RIBOCODE_PREPARE`: Prepare RiboCode annotation files
+  - `RIBOCODE_METAPLOTS`: Generate metaplots and P-site configuration
+  - `RIBOCODE_RIBOCODE`: Main ORF calling process
+- Added `ribocode.nf` subworkflow
+- Added RiboCode parameters: `--skip_ribocode`, `--extra_ribocode_args`
+
 ## v1.2.0 - 2025-12-03
 
 ### `Added`

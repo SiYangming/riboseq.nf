@@ -116,6 +116,7 @@ opt <- list(
     reference_level = '$reference',
     target_level = '$target',
     sample_id_col = "sample",
+    gene_id_col = 1,  # 指定第一列为基因ID
     samples_pairing_col = NULL,
     samples_batch_col = NULL,
     subset_to_contrast_samples = FALSE,
@@ -367,7 +368,7 @@ for (analysis in c("translated mRNA", "total mRNA", "translation", "buffering", 
     )
 
     write.table(
-        output,
+        cbind(gene_id = rownames(output), output),
         file = paste(opt\$output_prefix, sub(' ', '_', analysis), 'anota2seq.results.tsv', sep = '.'),
         col.names = TRUE,
         row.names = FALSE,

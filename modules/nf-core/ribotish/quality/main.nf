@@ -40,7 +40,7 @@ process RIBOTISH_QUALITY {
     """
 
     stub:
-    def _args = task.ext.args ?: ''
+    def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     touch ${prefix}_qual.txt ${prefix}_qual.pdf ${prefix}.para.py

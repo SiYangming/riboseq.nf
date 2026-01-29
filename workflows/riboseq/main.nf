@@ -34,6 +34,7 @@ include { RIBOTRICER_DETECTORFS                                } from '../../mod
 include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../modules/nf-core/anota2seq/anota2seqrun'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
 include { RIBOWALTZ                                            } from '../../modules/nf-core/ribowaltz/main'
+include { RIBOCODE                                             } from '../../subworkflows/local/ribocode/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,6 +68,7 @@ workflow RIBOSEQ {
     ch_transcript_fasta // channel: path(transcript.fasta)
     ch_star_index       // channel: path(star/index/)
     ch_salmon_index     // channel: path(salmon/index/)
+    ch_kallisto_index   // channel: path(kallisto/index/)
     ch_bbsplit_index    // channel: path(bbsplit/index/)
     ch_rrna_fastas      // channel: path(fasta)
     ch_sortmerna_index  // channel: path(sortmerna/index/)
@@ -107,7 +109,10 @@ workflow RIBOSEQ {
     //
     channel
         .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
-        .map { meta, fastq_1, fastq_2 ->
+        .map {
+            def meta = it[0]
+            def fastq_1 = it[1]
+            def fastq_2 = it[2]
             if (!fastq_2) {
                 return [ meta.id, meta + [ single_end:true ], [ fastq_1 ] ]
             } else {
@@ -229,12 +234,12 @@ workflow RIBOSEQ {
         }
 
     ch_bams_for_analysis = ch_genome_bam_by_type.riboseq.join(ch_genome_bam_index)
-    ch_fasta_gtf = ch_fasta.combine(ch_gtf).map{ fasta, gtf -> [ [:], fasta, gtf ] }.first()
+    ch_fasta_gtf = ch_fasta.combine(ch_gtf).map{ fasta, gtf -> [ [:], fasta, gtf ] }
 
     if (!params.skip_ribotish){
         RIBOTISH_QUALITY_RIBOSEQ(
             ch_bams_for_analysis,
-            ch_gtf.map { gtf_file -> [ [:], gtf_file ] }.first()
+            ch_gtf.map { gtf_file -> [ [:], gtf_file ] }
         )
         ch_versions      = ch_versions.mix(RIBOTISH_QUALITY_RIBOSEQ.out.versions)
 
@@ -306,6 +311,18 @@ workflow RIBOSEQ {
     }
 
     //
+    // RiboCode ORF calling
+    //
+    if (!params.skip_ribocode) {
+        RIBOCODE (
+            ch_transcriptome_bam_by_type.riboseq,
+            ch_fasta.map { fasta_file -> [ [:], fasta_file ] },
+            ch_gtf.map { gtf_file -> [ [:], gtf_file ] }
+        )
+        ch_versions = ch_versions.mix(RIBOCODE.out.versions)
+    }
+
+    //
     // SUBWORKFLOW: Count reads from BAM alignments using Salmon
     //
 
@@ -338,7 +355,6 @@ workflow RIBOSEQ {
         ch_samplesheet_matrix = QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled
             .combine(ch_samplesheet)
             .map { combined -> [combined[0], combined[2], combined[1]] }
-            .first()
 
         ANOTA2SEQ_ANOTA2SEQRUN(
             ch_contrasts,

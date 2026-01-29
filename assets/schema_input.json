@@ -38,6 +38,21 @@
                 "errorMessage": "Sample type must be provided and be one of 'riboseq', 'rnaseq' or 'tiseq'",
                 "enum": ["riboseq", "rnaseq", "tiseq"],
                 "meta": ["sample_type"]
+            },
+            "sample_description": {
+                "type": "string",
+                "errorMessage": "Sample description must be a string",
+                "meta": ["description"]
+            },
+            "pair": {
+                "type": ["string", "integer"],
+                "errorMessage": "Sample pair identifier must be a string or integer",
+                "meta": ["pair"]
+            },
+            "treatment": {
+                "type": "string",
+                "errorMessage": "Treatment condition must be a string",
+                "meta": ["treatment"]
             }
         },
         "required": ["sample", "fastq_1", "strandedness", "type"]

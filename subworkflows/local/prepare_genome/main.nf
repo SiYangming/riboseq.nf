@@ -13,6 +13,7 @@ include { UNTAR as UNTAR_BBSPLIT_INDEX      } from '../../../modules/nf-core/unt
 include { UNTAR as UNTAR_SORTMERNA_INDEX    } from '../../../modules/nf-core/untar'
 include { UNTAR as UNTAR_STAR_INDEX         } from '../../../modules/nf-core/untar'
 include { UNTAR as UNTAR_SALMON_INDEX       } from '../../../modules/nf-core/untar'
+include { UNTAR as UNTAR_KALLISTO_INDEX     } from '../../../modules/nf-core/untar'
 
 include { CUSTOM_CATADDITIONALFASTA         } from '../../../modules/nf-core/custom/catadditionalfasta'
 include { CUSTOM_GETCHROMSIZES              } from '../../../modules/nf-core/custom/getchromsizes'
@@ -21,6 +22,7 @@ include { BBMAP_BBSPLIT                     } from '../../../modules/nf-core/bbm
 include { SORTMERNA as SORTMERNA_INDEX      } from '../../../modules/nf-core/sortmerna'
 include { STAR_GENOMEGENERATE               } from '../../../modules/nf-core/star/genomegenerate'
 include { SALMON_INDEX                      } from '../../../modules/nf-core/salmon/index'
+include { KALLISTO_INDEX                    } from '../../../modules/nf-core/kallisto/index'
 include { RSEM_PREPAREREFERENCE as RSEM_PREPAREREFERENCE_GENOME } from '../../../modules/nf-core/rsem/preparereference'
 include { RSEM_PREPAREREFERENCE as MAKE_TRANSCRIPTS_FASTA       } from '../../../modules/nf-core/rsem/preparereference'
 
@@ -40,6 +42,7 @@ workflow PREPARE_GENOME {
     sortmerna_fasta_list     //      file: /path/to/sortmerna_fasta_list.txt
     star_index               // directory: /path/to/star/index/
     salmon_index             // directory: /path/to/salmon/index/
+    kallisto_index           // directory: /path/to/kallisto/index/
     bbsplit_index            // directory: /path/to/rsem/index/
     sortmerna_index          // directory: /path/to/sortmerna/index/
     gencode                  //   boolean: whether the genome is from GENCODE
@@ -268,9 +271,27 @@ workflow PREPARE_GENOME {
             ch_salmon_index = channel.value(file(salmon_index))
         }
     } else {
-        if ('salmon' in prepare_tool_indices) {
+        if ('salmon' in prepare_tool_indices || (params.pseudo_aligner == 'salmon' && !params.skip_pseudo_alignment)) {
             ch_salmon_index = SALMON_INDEX ( ch_fasta, ch_transcript_fasta ).index
             ch_versions     = ch_versions.mix(SALMON_INDEX.out.versions)
+        }
+    }
+
+    //
+    // Uncompress Kallisto index or generate from scratch if required
+    //
+    ch_kallisto_index = channel.empty()
+    if (kallisto_index) {
+        if (kallisto_index.endsWith('.tar.gz')) {
+            ch_kallisto_index = UNTAR_KALLISTO_INDEX ( [ [:], kallisto_index ] ).untar.map { untar_row -> untar_row[1] }
+            ch_versions       = ch_versions.mix(UNTAR_KALLISTO_INDEX.out.versions)
+        } else {
+            ch_kallisto_index = channel.value(file(kallisto_index))
+        }
+    } else {
+        if (params.pseudo_aligner == 'kallisto' && !params.skip_pseudo_alignment) {
+            ch_kallisto_index = KALLISTO_INDEX ( ch_transcript_fasta.map { t_fasta -> [ [:], t_fasta ] } ).index
+            ch_versions       = ch_versions.mix(KALLISTO_INDEX.out.versions)
         }
     }
 
@@ -285,5 +306,6 @@ workflow PREPARE_GENOME {
     sortmerna_index  = ch_sortmerna_index        // channel: path(sortmerna/index/)
     star_index       = ch_star_index             // channel: path(star/index/)
     salmon_index     = ch_salmon_index           // channel: path(salmon/index/)
+    kallisto_index   = ch_kallisto_index         // channel: path(kallisto/index/)
     versions         = ch_versions.ifEmpty(null) // channel: [ versions.yml ]
 }
