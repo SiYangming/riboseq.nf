@@ -18,3 +18,5 @@ test.xml
 /nextflow_work
 nextflow.out
 nextflow.out.pid
+/results_preview
+/results_stubtest
