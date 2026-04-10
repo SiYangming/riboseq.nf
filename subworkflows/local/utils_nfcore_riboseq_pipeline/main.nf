@@ -211,7 +211,14 @@ def getGenomeAttribute(attribute) {
             return params.genomes[ params.genome ][ attribute ]
         }
     }
-    return null
+    if (params.containsKey(attribute) && params[attribute]) {
+        return params[attribute]
+    }
+    def index_key = "${attribute}_index"
+    if (params.containsKey(index_key) && params[index_key]) {
+        return params[index_key]
+    }
+    return params[index_key]
 }
 
 //

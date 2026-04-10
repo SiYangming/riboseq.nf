@@ -16,3 +16,5 @@ test.xml
 /results_testdata
 /logs
 /nextflow_work
+nextflow.out
+nextflow.out.pid

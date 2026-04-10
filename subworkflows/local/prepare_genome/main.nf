@@ -55,6 +55,19 @@ workflow PREPARE_GENOME {
     main:
     ch_versions = channel.empty()
 
+    if (!fasta) {
+        error("Missing required reference FASTA. Provide --fasta or set --genome with a matching entry in params.genomes.")
+    }
+    if (!(gtf || gff)) {
+        error("Missing required genome annotation. Provide --gtf or --gff, or set --genome with a matching entry in params.genomes.")
+    }
+    if (!skip_bbsplit && !bbsplit_index && !bbsplit_fasta_list) {
+        error("BBSplit is enabled but no references were provided. Provide --bbsplit_fasta_list (2-column CSV: id,path_to_fasta) or --bbsplit_index, or set --skip_bbsplit.")
+    }
+    if (!skip_sortmerna && !sortmerna_index && !sortmerna_fasta_list) {
+        error("SortMeRNA is enabled but no rRNA database manifest was provided. Provide --ribo_database_manifest / --sortmerna_fasta_list or --sortmerna_index, or set --remove_ribo_rna false.")
+    }
+
     //
     // Uncompress genome fasta file if required
     //
@@ -214,6 +227,8 @@ workflow PREPARE_GENOME {
             }
         } else {
             ch_rrna_fastas = channel.from(ribo_db.readLines())
+                .map { row -> row.trim() }
+                .filter { row -> row && !row.startsWith('#') }
                 .map { row -> file(row, checkIfExists: true) }
 
             SORTMERNA_INDEX (
