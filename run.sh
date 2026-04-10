@@ -81,6 +81,50 @@ print_info() {
     print_color "$BLUE" "ℹ $@"
 }
 
+resolve_param_value() {
+    local key="$1"
+    if command -v nextflow &> /dev/null; then
+        local value=""
+        value="$(env NXF_OFFLINE="$OFFLINE" nextflow -c "$CONFIG_FILE" config -profile "$RUNWAY" -value "params.${key}" "$PIPELINE_DIR" 2>/dev/null | head -n 1 || true)"
+        if [[ -z "$value" ]]; then
+            value="$(env NXF_OFFLINE="$OFFLINE" nextflow -c "$CONFIG_FILE" config -value "params.${key}" "$PIPELINE_DIR" 2>/dev/null | head -n 1 || true)"
+        fi
+        echo "$value"
+    fi
+}
+
+extract_config_value() {
+    local key="$1"
+    grep -E "^[[:space:]]*${key}[[:space:]]*=" "$CONFIG_FILE" 2>/dev/null | sed -n 's/.*"\([^"]*\)".*/\1/p' | head -n 1 || true
+}
+
+expand_config_path() {
+    local expr="${1:-}"
+    [[ -z "$expr" ]] && return 0
+    expr="${expr%\"}"
+    expr="${expr#\"}"
+
+    local launch_dir
+    launch_dir="$(pwd -P)"
+
+    local riboseq_base_dir="${RIBOSEQ_BASE_DIR:-$launch_dir}"
+    local riboseq_pipeline_dir="${RIBOSEQ_PIPELINE_DIR:-$riboseq_base_dir}"
+    local riboseq_project_dir="${RIBOSEQ_PROJECT_DIR:-$riboseq_base_dir/testdata}"
+    local riboseq_fasta_dir="${RIBOSEQ_FASTA_DIR:-$riboseq_project_dir/reference}"
+    local riboseq_gtf_dir="${RIBOSEQ_GTF_DIR:-$riboseq_project_dir/reference}"
+    local riboseq_rnadb_dir="${RIBOSEQ_RNADB_DIR:-$riboseq_pipeline_dir/RNAdb}"
+
+    expr="${expr//\$\{launchDir\}/$launch_dir}"
+    expr="${expr//\$\{params.riboseq_base_dir\}/$riboseq_base_dir}"
+    expr="${expr//\$\{params.riboseq_pipeline_dir\}/$riboseq_pipeline_dir}"
+    expr="${expr//\$\{params.riboseq_project_dir\}/$riboseq_project_dir}"
+    expr="${expr//\$\{params.riboseq_fasta_dir\}/$riboseq_fasta_dir}"
+    expr="${expr//\$\{params.riboseq_gtf_dir\}/$riboseq_gtf_dir}"
+    expr="${expr//\$\{params.riboseq_rnadb_dir\}/$riboseq_rnadb_dir}"
+
+    echo "$expr"
+}
+
 # Check if pipeline is running
 is_pipeline_running() {
     if [[ -f "$PID_FILE" ]]; then
@@ -545,7 +589,9 @@ run_diagnostics() {
     
     # Check 2: Sample sheet
     echo "2. Checking sample sheet..."
-    local samplesheet=$(grep "input" "$CONFIG_FILE" 2>/dev/null | grep -oP '(?<=").*(?=")' || echo "")
+    local samplesheet=$(resolve_param_value input)
+    [[ -z "$samplesheet" ]] && samplesheet="$(extract_config_value input)"
+    samplesheet="$(expand_config_path "$samplesheet")"
     if [[ -n "$samplesheet" ]] && [[ -f "$samplesheet" ]]; then
         print_success "Sample sheet found: $samplesheet"
         local sample_count=$(tail -n +2 "$samplesheet" | wc -l)
@@ -558,8 +604,12 @@ run_diagnostics() {
     
     # Check 3: Reference genome
     echo "3. Checking reference genome..."
-    local fasta=$(grep "fasta" "$CONFIG_FILE" 2>/dev/null | grep -oP '(?<=").*(?=")' | head -1 || echo "")
-    local gtf=$(grep "gtf" "$CONFIG_FILE" 2>/dev/null | grep -oP '(?<=").*(?=")' | head -1 || echo "")
+    local fasta=$(resolve_param_value fasta)
+    [[ -z "$fasta" ]] && fasta="$(extract_config_value fasta)"
+    fasta="$(expand_config_path "$fasta")"
+    local gtf=$(resolve_param_value gtf)
+    [[ -z "$gtf" ]] && gtf="$(extract_config_value gtf)"
+    gtf="$(expand_config_path "$gtf")"
     
     if [[ -n "$fasta" ]] && [[ -f "$fasta" ]]; then
         print_success "Reference FASTA found: $fasta"
@@ -667,7 +717,9 @@ check_files() {
     fi
     
     # Check sample sheet
-    local samplesheet=$(grep "input" "$CONFIG_FILE" 2>/dev/null | grep -oP '(?<=").*(?=")' || echo "")
+    local samplesheet=$(resolve_param_value input)
+    [[ -z "$samplesheet" ]] && samplesheet="$(extract_config_value input)"
+    samplesheet="$(expand_config_path "$samplesheet")"
     if [[ -n "$samplesheet" ]]; then
         if [[ -f "$samplesheet" ]]; then
             print_success "Sample sheet: $samplesheet"
@@ -705,8 +757,12 @@ check_files() {
     echo
     
     # Check reference files
-    local fasta=$(grep "fasta" "$CONFIG_FILE" 2>/dev/null | grep -oP '(?<=").*(?=")' | head -1 || echo "")
-    local gtf=$(grep "gtf" "$CONFIG_FILE" 2>/dev/null | grep -oP '(?<=").*(?=")' | head -1 || echo "")
+    local fasta=$(resolve_param_value fasta)
+    [[ -z "$fasta" ]] && fasta="$(extract_config_value fasta)"
+    local gtf=$(resolve_param_value gtf)
+    [[ -z "$gtf" ]] && gtf="$(extract_config_value gtf)"
+    fasta="$(expand_config_path "$fasta")"
+    gtf="$(expand_config_path "$gtf")"
     
     if [[ -f "$fasta" ]]; then
         print_success "Reference FASTA: $fasta"
