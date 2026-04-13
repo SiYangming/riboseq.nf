@@ -1,33 +1,40 @@
-# 水稻完整 rRNA + tRNA 数据库配置
-# 用于 Ribo-seq 分析中去除 rRNA 和 tRNA 污染
-
 # ============================================
-# rRNA 数据库
+# 水稻 Ribo-seq 完整 rRNA + tRNA 去除数据库
+# 用于 SortMeRNA 工具
 # ============================================
 
-# 真核生物核 rRNA
-# https://raw.githubusercontent.com/biocore/sortmerna/v4.3.4/data/rRNA_databases/silva-euk-18s-id95.fasta
-# https://raw.githubusercontent.com/biocore/sortmerna/v4.3.4/data/rRNA_databases/silva-euk-28s-id98.fasta
-# https://raw.githubusercontent.com/biocore/sortmerna/v4.3.4/data/rRNA_databases/rfam-5.8s-database-id98.fasta
-# https://raw.githubusercontent.com/biocore/sortmerna/v4.3.4/data/rRNA_databases/rfam-5s-database-id98.fasta
+# --------------------------------------------
+# 真核生物核 rRNA（通用数据库）
+# --------------------------------------------
 ./RNAdb/rRNA/rfam-5.8s-database-id98.fasta
 ./RNAdb/rRNA/rfam-5s-database-id98.fasta
-./RNAdb/rRNA/silva-arc-16s-id95.fasta
-./RNAdb/rRNA/silva-arc-23s-id98.fasta
-./RNAdb/rRNA/silva-bac-16s-id90.fasta
-./RNAdb/rRNA/silva-bac-23s-id98.fasta
 ./RNAdb/rRNA/silva-euk-18s-id95.fasta
 ./RNAdb/rRNA/silva-euk-28s-id98.fasta
 
-# 水稻叶绿体 rRNA（本地文件）
+# --------------------------------------------
+# 水稻叶绿体 rRNA（关键！）
+# --------------------------------------------
 ./RNAdb/riceRNAdb/rice_chloroplast_rRNA.fasta
 
-# 水稻线粒体 rRNA（本地文件）
+# --------------------------------------------
+# 水稻线粒体 rRNA（关键！）
+# --------------------------------------------
 ./RNAdb/riceRNAdb/rice_mitochondrial_rRNA.fasta
 
-# ============================================
-# tRNA 数据库
-# ============================================
-
-# 水稻所有 tRNA（细胞核 + 叶绿体 + 线粒体）
+# --------------------------------------------
+# 水稻所有 tRNA（强烈推荐！）
+# --------------------------------------------
 ./RNAdb/riceRNAdb/rice_all_tRNA.fasta
+
+# --------------------------------------------
+# 细菌 rRNA（可选，用于防止环境污染）
+# 如果是实验室纯培养样本，可以注释掉以下两行
+# --------------------------------------------
+./RNAdb/rRNA/silva-bac-16s-id90.fasta
+./RNAdb/rRNA/silva-bac-23s-id98.fasta
+# --------------------------------------------
+# 古菌 rRNA（不推荐，水稻样本几乎不会有古菌）
+# 如果需要加快处理速度，注释掉以下两行
+# --------------------------------------------
+# ./RNAdb/rRNA/silva-arc-16s-id95.fasta
+# ./RNAdb/rRNA/silva-arc-23s-id98.fasta
