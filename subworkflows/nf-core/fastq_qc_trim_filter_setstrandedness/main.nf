@@ -135,6 +135,7 @@ workflow FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS {
     ).reads.mix(ch_fastq.single).set { ch_filtered_reads }
 
     ch_versions = ch_versions.mix(CAT_FASTQ.out.versions.first())
+    
 
     //
     // MODULE: Lint FastQ files
@@ -146,7 +147,8 @@ workflow FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS {
         )
         ch_versions = ch_versions.mix(FQ_LINT.out.versions.first())
         ch_lint_log = ch_lint_log.mix(FQ_LINT.out.lint)
-        ch_filtered_reads = ch_filtered_reads.join(FQ_LINT.out.lint.map { lint_entry -> lint_entry[0] })
+        // Only keep reads that passed linting (by joining)
+        ch_filtered_reads = ch_filtered_reads.join(FQ_LINT.out.lint.map { lint_entry -> [lint_entry[0], lint_entry[1]] }).map { meta, reads, lint -> [meta, reads] }
     }
 
     //
@@ -227,7 +229,7 @@ workflow FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS {
             ch_filtered_reads
         )
         ch_lint_log = ch_lint_log.mix(FQ_LINT_AFTER_TRIMMING.out.lint)
-        ch_filtered_reads = ch_filtered_reads.join(FQ_LINT_AFTER_TRIMMING.out.lint.map { lint_entry -> lint_entry[0] })
+        ch_filtered_reads = ch_filtered_reads.join(FQ_LINT_AFTER_TRIMMING.out.lint.map { lint_entry -> [lint_entry[0], lint_entry[1]] }).map { meta, reads, lint -> [meta, reads] }
     }
 
     //
@@ -251,7 +253,7 @@ workflow FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS {
                 ch_filtered_reads
             )
             ch_lint_log = ch_lint_log.mix(FQ_LINT_AFTER_BBSPLIT.out.lint)
-            ch_filtered_reads = ch_filtered_reads.join(FQ_LINT_AFTER_BBSPLIT.out.lint.map { lint_entry -> lint_entry[0] })
+            ch_filtered_reads = ch_filtered_reads.join(FQ_LINT_AFTER_BBSPLIT.out.lint.map { lint_entry -> [lint_entry[0], lint_entry[1]] }).map { meta, reads, lint -> [meta, reads] }
         }
     }
 
@@ -289,7 +291,7 @@ workflow FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS {
                 ch_filtered_reads
             )
             ch_lint_log = ch_lint_log.mix(FQ_LINT_AFTER_SORTMERNA.out.lint)
-            ch_filtered_reads = ch_filtered_reads.join(FQ_LINT_AFTER_SORTMERNA.out.lint.map { lint_entry -> lint_entry[0] })
+            ch_filtered_reads = ch_filtered_reads.join(FQ_LINT_AFTER_SORTMERNA.out.lint.map { lint_entry -> [lint_entry[0], lint_entry[1]] }).map { meta, reads, lint -> [meta, reads] }
         }
     }
 

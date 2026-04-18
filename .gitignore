@@ -20,3 +20,7 @@ nextflow.out
 nextflow.out.pid
 /results_preview
 /results_stubtest
+/results_test_SRP189094
+/testdata/SRP189094
+/testdata/reference
+/testdata/GSE182201/SRX*

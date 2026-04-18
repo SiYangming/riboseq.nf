@@ -12,6 +12,7 @@ include { BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS as BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS
 include { FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS                                                 } from '../../subworkflows/nf-core/fastq_qc_trim_filter_setstrandedness/main'
 include { BAM_DEDUP_UMI      } from '../../subworkflows/nf-core/bam_dedup_umi'
 include { FASTQ_ALIGN_STAR   } from '../../subworkflows/nf-core/fastq_align_star'
+include { UPDATE_SAMPLESHEET } from '../../modules/local/update_samplesheet/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -107,7 +108,7 @@ workflow RIBOSEQ {
     //
     // Create input channel from input file provided through params.input
     //
-    channel
+    Channel
         .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
         .map {
             def meta = it[0]
@@ -124,6 +125,15 @@ workflow RIBOSEQ {
             validateInputSamplesheet(row)
         }
         .set { ch_fastq }
+
+    //
+    // MODULE: Update samplesheet with merged descriptions
+    //
+    UPDATE_SAMPLESHEET (
+        ch_samplesheet,
+        ch_fastq.map{ meta, reads -> meta.id }.toList()
+    )
+    // ch_versions = ch_versions.mix(UPDATE_SAMPLESHEET.out.versions)
 
     //
     // SUBWORKFLOW: preprocess reads for RNA-seq. Includes trimming,
@@ -327,7 +337,7 @@ workflow RIBOSEQ {
     //
 
     QUANTIFY_STAR_SALMON (
-        ch_samplesheet.map { samplesheet_file -> [ [:], samplesheet_file ] },
+        UPDATE_SAMPLESHEET.out.samplesheet.map { samplesheet_file -> [ [:], samplesheet_file ] },
         ch_transcriptome_bam,
         [],
         ch_transcript_fasta,
@@ -353,7 +363,7 @@ workflow RIBOSEQ {
             .map { row -> [row, row.variable, row.reference, row.target] }
 
         ch_samplesheet_matrix = QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled
-            .combine(ch_samplesheet)
+            .combine(UPDATE_SAMPLESHEET.out.samplesheet)
             .map { combined -> [combined[0], combined[2], combined[1]] }
 
         ANOTA2SEQ_ANOTA2SEQRUN(

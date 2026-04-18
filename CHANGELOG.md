@@ -3,6 +3,16 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.2.0 - 2026-04-16
+
+### `Added`
+
+- Added automatic handling and merging of technical replicates using `nf-core/cat/fastq` ([@siyangming](https://github.com/siyangming))
+  - Integrated technical replicate merging directly into the `FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS` subworkflow via `CAT_FASTQ`.
+  - Modified data channel processing to group inputs with identical sample IDs.
+  - Added `UPDATE_SAMPLESHEET` local module to dynamically generate a merged samplesheet for downstream differential expression analysis (combining `sample_description` for replicates, backing up the original to `samplesheet_original.csv`, and saving the new one as `samplesheet.csv`).
+  - Fixed issues with `versions` channel emissions causing pipeline conflicts.
+
 ## v2.1.0 - 2026-01-29
 
 ### `Added`
