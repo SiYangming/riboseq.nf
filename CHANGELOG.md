@@ -3,6 +3,31 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.2.3 - 2026-04-20
+
+### `Fixed`
+
+- Fixed R class validation error in `anota2seq/anota2seqrun` module when `normalize = FALSE` ([@siyangming](https://github.com/siyangming))
+  - Explicitly converted input `data.frame` objects to `matrix` using `as.matrix()` before passing to `anota2seqDataSetFromMatrix()`, resolving the `invalid class "Anota2seqDataSet" object` crash when processing length-scaled pseudo-counts.
+- Fixed `matplotlib` cache directory permission error in `ribotricer/detectorfs` module by explicitly setting a temporary `MPLCONFIGDIR` inside the container environment. ([@siyangming](https://github.com/siyangming))
+
+## v2.2.2 - 2026-04-19
+
+### `Fixed`
+
+- Fixed multiple bugs in `ribotish/predict` module related to TI-seq data handling ([@siyangming](https://github.com/siyangming))
+  - Corrected variable typo from `para_tis` to `para_ti`.
+  - Corrected parameter typo from `--tisparapara` to `--tispara`.
+  - Fixed logic bug where empty `bam_ti` list `[]` was evaluated as true, causing "No input TIS data!" errors when only Ribo-seq data was provided.
+
+## v2.2.1 - 2026-04-19
+
+### `Fixed`
+
+- Fixed incorrect syntax for `optional: true` parameter in `ribotricer/detectorfs` module outputs ([@siyangming](https://github.com/siyangming))
+  - Moved `optional: true` outside of the `path()` definition to correctly handle missing files and avoid pre-evaluation glob errors.
+  - Used double quotes for glob patterns following Nextflow best practices.
+
 ## v2.2.0 - 2026-04-16
 
 ### `Added`

@@ -28,18 +28,18 @@ process RIBOTISH_PREDICT {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
 
-    ribo_bam_cmd = ''
-    ti_bam_cmd = ''
-    if (bam_ribo){
+    def ribo_bam_cmd = ''
+    def ti_bam_cmd = ''
+    if (bam_ribo && bam_ribo.size() > 0){
         ribo_bam_cmd = "-b ${bam_ribo.join(',')}"
-        if (para_ribo){
+        if (para_ribo && para_ribo.size() > 0){
             ribo_bam_cmd += " --ribopara ${para_ribo.join(',')}"
         }
     }
-    if (bam_ti){
+    if (bam_ti && bam_ti.size() > 0){
         ti_bam_cmd = "-t ${bam_ti.join(',')}"
-        if (para_tis){
-            ti_bam_cmd += " --tisparapara  ${para_ti.join(',')}"
+        if (para_ti && para_ti.size() > 0){
+            ti_bam_cmd += " --tispara ${para_ti.join(',')}"
         }
     }
     """

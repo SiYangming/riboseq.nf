@@ -303,8 +303,8 @@ if (! is.null(opt\$samples_pairing_col)){
     rnaseq_samples <- rnaseq_samples[order(sample.sheet[rnaseq_samples, opt\$samples_pairing_col])]
 }
 
-riboseq_data <- count.table[,riboseq_samples]
-rnaseq_data <- count.table[,rnaseq_samples]
+    riboseq_data <- as.matrix(count.table[,riboseq_samples])
+    rnaseq_data <- as.matrix(count.table[,rnaseq_samples])
 
 # Make the anota2seqDataSet
 

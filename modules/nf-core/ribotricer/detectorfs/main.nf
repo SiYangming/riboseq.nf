@@ -12,13 +12,13 @@ process RIBOTRICER_DETECTORFS {
     tuple val(meta2), path(candidate_orfs)
 
     output:
-    tuple val(meta), path('*_protocol.txt', optional: true)             , emit: protocol
+    tuple val(meta), path("*_protocol.txt"), optional: true             , emit: protocol
     tuple val(meta), path('*_bam_summary.txt')          , emit: bam_summary
     tuple val(meta), path('*_read_length_dist.pdf')     , emit: read_length_dist
     tuple val(meta), path('*_metagene_profiles_5p.tsv') , emit: metagene_profile_5p
     tuple val(meta), path('*_metagene_profiles_3p.tsv') , emit: metagene_profile_3p
     tuple val(meta), path('*_metagene_plots.pdf')       , emit: metagene_plots
-    tuple val(meta), path('*_psite_offsets.txt', optional: true)        , emit: psite_offsets
+    tuple val(meta), path("*_psite_offsets.txt"), optional: true        , emit: psite_offsets
     tuple val(meta), path('*_pos.wig')                  , emit: pos_wig
     tuple val(meta), path('*_neg.wig')                  , emit: neg_wig
     tuple val(meta), path('*_translating_ORFs.tsv')     , emit: orfs
@@ -50,6 +50,8 @@ process RIBOTRICER_DETECTORFS {
         //    break
     }
     """
+    export MPLCONFIGDIR=\$(mktemp -d)
+    
     ribotricer detect-orfs \\
         --bam $bam \\
         --ribotricer_index $candidate_orfs \\
