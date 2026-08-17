@@ -16,7 +16,7 @@ workflow RIBOCODE {
 
     main:
 
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     //
     // Update GTF file for RiboCode compatibility

@@ -3,6 +3,30 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.2.4 - 2026-08-17
+
+### `Fixed`
+
+- **Lint 修复（5 errors + 42 warnings → 0）**:
+  - `ribotricer/detectorfs`：script 块内 `switch` 语句改为 `if/else`（Nextflow 26 语法错误）
+  - `prepare_genome`：`GFFREAD` 调用补全第 2 个参数（`ch_gff, []`）
+  - `ribocode`/`ribotish`/`ribotricer` 系列模块：删除 stub 块未使用的 `def args`
+  - `Channel` → `channel`（`ribocode`、`workflows/riboseq/main.nf`）；隐式闭包 `it` 显式化
+  - `utils_nextflow_pipeline` / `utils_nfschema_plugin`：单 emit 省略名称；`utils_nfcore_pipeline`：`checkConfigProvided()` 直接作为 emit
+  - `fastq_qc_trim_filter_setstrandedness`：未用闭包参数 `lint` → `_lint`
+  - `conf/modules.config`：16 处 `saveAs: { ... ? it : null }` 隐式闭包改为显式 `filename ->` 参数
+  - `workflows/riboseq/main.nf`：未用 `ch_kallisto_index` take 参数 → `_ch_kallisto_index`；`ch_fastq.map{ meta, reads -> meta.id }` → `row -> row[0].id`
+
+### `Added`
+
+- **Server profile**: Added `server` profile loading `conf/server.config` for Oryza sativa SRP189094 (Riboseq vs polyA RNA) production analysis, merging the previous local test config (`conf/SRP189094.config`) and server config (`rice/riboseq.config`). Includes `local` executor (96 CPUs / 400 GB), per-process resource limits, Docker engine and STAR/Salmon/DESeq2 resource overrides.
+- **Genome registry**: `conf/server.config` 的 `genomes` map 已与 `circdna.nf` 对齐（17 物种，基于 `PublicDB/reference` 的 `fasta_base_path`），并补充各物种 GTF；`--genome Oryza_sativa` 等解析 fasta/gtf，`input`/`contrasts`/`outdir` 通过 CLI 传入。
+- **Samplesheets**: Added `samplesheets/SRP189094.csv` (input samplesheet) and `samplesheets/SRP189094_contrasts.csv` (contrasts file) for the SRP189094 project.
+
+### `Removed`
+
+- Removed `conf/SRP189094.config` (local test version) — consolidated into `conf/server.config`.
+
 ## v2.2.3 - 2026-04-20
 
 ### `Fixed`

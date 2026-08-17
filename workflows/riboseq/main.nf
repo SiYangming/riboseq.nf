@@ -69,7 +69,7 @@ workflow RIBOSEQ {
     ch_transcript_fasta // channel: path(transcript.fasta)
     ch_star_index       // channel: path(star/index/)
     ch_salmon_index     // channel: path(salmon/index/)
-    ch_kallisto_index   // channel: path(kallisto/index/)
+    _ch_kallisto_index  // channel: path(kallisto/index/)
     ch_bbsplit_index    // channel: path(bbsplit/index/)
     ch_rrna_fastas      // channel: path(fasta)
     ch_sortmerna_index  // channel: path(sortmerna/index/)
@@ -108,12 +108,12 @@ workflow RIBOSEQ {
     //
     // Create input channel from input file provided through params.input
     //
-    Channel
+    channel
         .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
-        .map {
-            def meta = it[0]
-            def fastq_1 = it[1]
-            def fastq_2 = it[2]
+        .map { row ->
+            def meta = row[0]
+            def fastq_1 = row[1]
+            def fastq_2 = row[2]
             if (!fastq_2) {
                 return [ meta.id, meta + [ single_end:true ], [ fastq_1 ] ]
             } else {
@@ -131,7 +131,7 @@ workflow RIBOSEQ {
     //
     UPDATE_SAMPLESHEET (
         ch_samplesheet,
-        ch_fastq.map{ meta, reads -> meta.id }.toList()
+        ch_fastq.map{ row -> row[0].id }.toList()
     )
     // ch_versions = ch_versions.mix(UPDATE_SAMPLESHEET.out.versions)
 

@@ -103,10 +103,10 @@ workflow PIPELINE_INITIALISATION {
 
     channel
         .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
-        .map {
-            def meta = it[0]
-            def fastq_1 = it[1]
-            def fastq_2 = it[2]
+        .map { row ->
+            def meta = row[0]
+            def fastq_1 = row[1]
+            def fastq_2 = row[2]
                 if (!fastq_2) {
                     return [ meta.id, meta + [ single_end:true ], [ fastq_1 ] ]
                 } else {

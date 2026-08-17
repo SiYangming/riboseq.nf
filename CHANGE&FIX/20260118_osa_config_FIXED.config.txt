@@ -7,7 +7,6 @@
  */
 
 resume = true
-workDir = './nextflow_work'
 
 params {
     // Input/Output
