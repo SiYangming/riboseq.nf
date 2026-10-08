@@ -3,6 +3,25 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Fork overlay on v2.0.0 - 2026-10-08
+
+Local fork (`SiYangming/riboseq.nf`) rebased onto official nf-core/riboseq **v2.0.0** (`upstream/master`). Previous fork-only versioning `2.1.0`–`2.2.4` was divergent from upstream and is retired.
+
+### `Added` (fork)
+
+- `conf/server.config` + `-profile server`: multi-species genomes registry and SRP189094 production resources
+- `conf/test_local.config` + `-profile test_local`
+- `samplesheets/SRP189094.csv` and `samplesheets/SRP189094_contrasts.csv`
+- `RNAdb/` (incl. rice rRNA/tRNA) and helper scripts under `bin/`
+- `modules/local/update_samplesheet`: collapse technical-replicate samplesheet rows for quantification / DTE
+- Docker C-layer: `docker.fixOwnership = true` alongside existing UID/GID `runOptions`
+
+### `Fixed` (fork, candidates for upstream PR)
+
+- `anota2seq/anota2seqrun`: coerce count subsets with `as.matrix()` before `anota2seqDataSetFromMatrix`
+- `ribotish/predict`: use `--tispara`; treat empty `bam_ti` / `para_ti` lists as absent
+- `ribotricer/detectorfs`: set writable `MPLCONFIGDIR` inside the container
+
 ## v2.0.0 - 2026-09-15
 
 ### `Credits`

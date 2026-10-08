@@ -1,0 +1,8 @@
+./RNAdb/rRNA/rfam-5.8s-database-id98.fasta
+./RNAdb/rRNA/rfam-5s-database-id98.fasta
+./RNAdb/rRNA/silva-arc-16s-id95.fasta
+./RNAdb/rRNA/silva-arc-23s-id98.fasta
+./RNAdb/rRNA/silva-bac-16s-id90.fasta
+./RNAdb/rRNA/silva-bac-23s-id98.fasta
+./RNAdb/rRNA/silva-euk-18s-id95.fasta
+./RNAdb/rRNA/silva-euk-28s-id98.fasta

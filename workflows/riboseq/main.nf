@@ -24,6 +24,7 @@ include { DESEQ2_DELTATE as DESEQ2_DELTATE_ORF } from '../../modules/local/deseq
 include { ANOTA2SEQ_ANOTA2SEQRUN as ANOTA2SEQ_ANOTA2SEQRUN_ORF } from '../../modules/nf-core/anota2seq/anota2seqrun'
 include { DOTSEQ_DOTSEQ as DOTSEQ_DOTSEQ_ORF } from '../../modules/nf-core/dotseq/dotseq'
 include { GAWK as FILTER_COUNTS_CANONICAL                      } from '../../modules/nf-core/gawk'
+include { UPDATE_SAMPLESHEET                                   } from '../../modules/local/update_samplesheet/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -142,6 +143,16 @@ workflow RIBOSEQ {
             validateInputSamplesheet(row, params.with_umi)
         }
         .set { ch_fastq }
+
+    //
+    // MODULE: Collapse technical-replicate rows and merge sample_description
+    // for downstream quantification / DTE (FASTQ merging itself is handled by CAT_FASTQ).
+    //
+    UPDATE_SAMPLESHEET (
+        ch_samplesheet,
+        ch_fastq.map { meta, _reads -> meta.id }.toList()
+    )
+    ch_analysis_samplesheet = UPDATE_SAMPLESHEET.out.samplesheet
 
     ch_fastq
         .branch { meta, reads ->
@@ -612,7 +623,7 @@ workflow RIBOSEQ {
     // Salmon transcriptome quantification uses the full GTF: tx2gene must match
     // the transcript fasta the Salmon index was built against.
     QUANTIFY_STAR_SALMON (
-        ch_samplesheet.map { ss -> [ [:], ss ] },
+        ch_analysis_samplesheet.map { ss -> [ [:], ss ] },
         ch_transcriptome_bam,
         [],
         ch_transcript_fasta,
@@ -643,7 +654,7 @@ workflow RIBOSEQ {
         def ch_pseudo_index_te = params.pseudo_aligner == 'kallisto' ? ch_kallisto_index_te : ch_salmon_index
 
         QUANTIFY_PSEUDO_TE (
-            ch_samplesheet.map { ss -> [ [:], ss ] },
+            ch_analysis_samplesheet.map { ss -> [ [:], ss ] },
             ch_reads_for_te,
             ch_pseudo_index_te,
             ch_transcript_fasta,
@@ -721,7 +732,7 @@ workflow RIBOSEQ {
             .map{ row -> [row, row.variable, row.reference, row.target]}
 
         ch_samplesheet_matrix = ch_te_counts
-            .combine(ch_samplesheet)
+            .combine(ch_analysis_samplesheet)
             .map{ tup -> [tup[0], tup[2], tup[1]]}
             .first()
 
@@ -795,7 +806,7 @@ workflow RIBOSEQ {
                 }
 
                 QUANTIFY_HYBRID_RNA(
-                    ch_samplesheet.map { ss -> [ [:], ss ] },
+                    ch_analysis_samplesheet.map { ss -> [ [:], ss ] },
                     ch_full_hybrid_transcriptome_bam,
                     [],
                     ch_full_hybrid_transcript_fasta,
@@ -825,7 +836,7 @@ workflow RIBOSEQ {
             )
 
             ch_orf_samplesheet_matrix = DTE_COUNTS_PREP.out.counts
-                .combine(ch_samplesheet)
+                .combine(ch_analysis_samplesheet)
                 .map { meta, counts, samplesheet -> [ meta, samplesheet, counts ] }
                 .first()
 
@@ -845,7 +856,7 @@ workflow RIBOSEQ {
 
             if ('dotseq' in te_methods) {
                 ch_dotseq_input = DTE_COUNTS_PREP.out.counts
-                    .combine(ch_samplesheet)
+                    .combine(ch_analysis_samplesheet)
                     .combine(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.catalogue_tsv.map { _meta, tsv -> tsv })
                     .map { meta, counts, samplesheet, annotation -> [ meta, samplesheet, counts, annotation ] }
                     .first()

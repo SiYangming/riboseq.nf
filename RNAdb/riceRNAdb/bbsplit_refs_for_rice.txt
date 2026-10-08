@@ -1,0 +1,2 @@
+magnaporthe,/path/to/genomes/Magnaporthe_oryzae.MG8.dna.toplevel.fa
+ecoli,/path/to/genomes/Escherichia_coli_K12.fa

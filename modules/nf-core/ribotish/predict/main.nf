@@ -38,10 +38,10 @@ process RIBOTISH_PREDICT {
             ribo_bam_cmd += " --ribopara ${para_ribo.join(',')}"
         }
     }
-    if (bam_ti){
+    if (bam_ti && bam_ti.size() > 0){
         ti_bam_cmd = "-t ${bam_ti.join(',')}"
-        if (para_ti){
-            ti_bam_cmd += " --tisparapara  ${para_ti.join(',')}"
+        if (para_ti && para_ti.size() > 0){
+            ti_bam_cmd += " --tispara ${para_ti.join(',')}"
         }
     }
     """

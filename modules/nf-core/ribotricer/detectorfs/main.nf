@@ -47,6 +47,8 @@ process RIBOTRICER_DETECTORFS {
     //    strandedness_cmd = "--stranded no"
     //    break
     """
+    export MPLCONFIGDIR=\$(mktemp -d)
+
     ribotricer detect-orfs \\
         --bam $bam \\
         --ribotricer_index $candidate_orfs \\
